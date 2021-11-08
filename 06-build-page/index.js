@@ -1,8 +1,6 @@
 // Imports
 const path = require("path");
 const fsPrms = require("fs/promises");
-const { makeCSSBundle } = require("./merge-slyles.js");
-const { copyDirContent } = require("./copy-dir.js");
 
 // Const
 const targetDir = "project-dist";
@@ -10,9 +8,56 @@ const assetsDir = "assets";
 const srcStyles = "styles";
 const srcComponents = "components";
 
-const targetHTML = "index.html";
 const templateHTML = "template.html";
+const targetHTML = "index.html";
 const targetCSS = "style.css";
+
+async function makeCSSBundle(rootFolder, srcFolder, targetFolder, bundleName) {
+  const distBundle = path.resolve(rootFolder, targetFolder, bundleName);
+  // Delete old file
+  try {
+    await fsPrms.unlink(distBundle);
+  } catch {}
+
+  try {
+    // Read src folder content
+    const files = await fsPrms.readdir(path.join(rootFolder, srcFolder), {
+      withFileTypes: true,
+    });
+    // Read css files
+    let bundleContent = "";
+    for (const item of files) {
+      if (item.isFile() && path.extname(item.name) === ".css") {
+        const stylePath = path.join(rootFolder, srcFolder, item.name);
+        bundleContent += await fsPrms.readFile(stylePath, { encoding: "utf-8" });
+        bundleContent += "\n\n";
+      }
+    }
+    // Write bundle
+    await fsPrms.writeFile(
+      path.join(rootFolder, targetFolder, bundleName),
+      bundleContent
+    );
+  } catch (err) {
+    console.error(err.message);
+  }
+}
+
+async function copyDirContent(srcDir, distDir) {
+  const items = await fsPrms.readdir(srcDir, { withFileTypes: true });
+  for (const item of items) {
+    // Copy files
+    if (item.isFile()) {
+      const srcFile = path.join(srcDir, item.name);
+      const distFile = path.join(distDir, item.name);
+      await fsPrms.copyFile(srcFile, distFile);
+    } else if (item.isDirectory()) {
+      // Create folder
+      await fsPrms.mkdir(path.join(distDir, item.name), { recursive: true });
+      await copyDirContent(path.join(srcDir, item.name), path.join(distDir, item.name));
+    }
+  }
+}
 
 async function assambleHTML() {
   try {
@@ -53,4 +98,5 @@ async function assambleHTML() {
     console.error(err.message);
   }
 }
+
 assambleHTML();

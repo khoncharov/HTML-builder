@@ -1,7 +1,8 @@
 // Imports
 const path = require("path");
 const fsPrms = require("fs/promises");
-const { makeCSSBundle } = require("../05-merge-styles/merge-slyles.js");
+const { makeCSSBundle } = require("./merge-slyles.js");
+const { copyDirContent } = require("./copy-dir.js");
 
 // Const
 const targetDir = "project-dist";
@@ -45,7 +46,9 @@ async function assambleHTML() {
     await makeCSSBundle(__dirname, srcStyles, targetDir, targetCSS);
 
     // Использовать скрипт из задания 04-copy-directory для переноса папки assets в папку project-dist
-    //
+    const assetsSrcPath = path.join(__dirname, assetsDir);
+    const assetsDistPath = path.join(__dirname, targetDir, assetsDir);
+    copyDirContent(assetsSrcPath, assetsDistPath);
   } catch (err) {
     console.error(err.message);
   }

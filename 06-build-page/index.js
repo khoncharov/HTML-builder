@@ -59,7 +59,7 @@ async function copyDirContent(srcDir, distDir) {
   }
 }
 
-async function assambleHTML() {
+async function assembleProject() {
   try {
     // Прочтение и сохранение в переменной файла-шаблона
     const templateContent = await fsPrms.readFile(path.join(__dirname, templateHTML), {
@@ -99,4 +99,4 @@ async function assambleHTML() {
   }
 }
 
-assambleHTML();
+assembleProject();

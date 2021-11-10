@@ -39,23 +39,46 @@ async function makeCSSBundle(rootFolder, srcFolder, targetFolder, bundleName) {
       bundleContent
     );
   } catch (err) {
-    console.error(err.message);
+    console.error("Function makeCSSBundle, Err:", err.message);
   }
 }
 
 async function copyDirContent(srcDir, distDir) {
-  const items = await fsPrms.readdir(srcDir, { withFileTypes: true });
-  for (const item of items) {
-    // Copy files
-    if (item.isFile()) {
-      const srcFile = path.join(srcDir, item.name);
-      const distFile = path.join(distDir, item.name);
-      await fsPrms.copyFile(srcFile, distFile);
-    } else if (item.isDirectory()) {
-      // Create folder
-      await fsPrms.mkdir(path.join(distDir, item.name), { recursive: true });
-      await copyDirContent(path.join(srcDir, item.name), path.join(distDir, item.name));
+  try {
+    const items = await fsPrms.readdir(srcDir, { withFileTypes: true });
+    for (const item of items) {
+      // Copy files
+      if (item.isFile()) {
+        const srcFile = path.join(srcDir, item.name);
+        const distFile = path.join(distDir, item.name);
+        await fsPrms.copyFile(srcFile, distFile);
+      } else if (item.isDirectory()) {
+        // Create folder
+        await fsPrms.mkdir(path.join(distDir, item.name), { recursive: true });
+        await copyDirContent(path.join(srcDir, item.name), path.join(distDir, item.name));
+      }
     }
+  } catch (err) {
+    console.error("Function copyDirContent, Err:", err.message);
+  }
+}
+
+async function cleanDir(dirName) {
+  try {
+    const items = await fsPrms.readdir(dirName, { withFileTypes: true });
+    for (const item of items) {
+      if (item.isFile()) {
+        // Delete files
+        const targetFile = path.join(dirName, item.name);
+        await fsPrms.unlink(targetFile);
+      } else if (item.isDirectory()) {
+        // Delete folder
+        const targetDir = path.join(dirName, item.name);
+        await fsPrms.rm(targetDir, { recursive: true });
+      }
+    }
+  } catch (err) {
+    console.error("Function cleanDir, Err:", err.message);
   }
 }
 
@@ -93,9 +116,11 @@ async function assembleProject() {
     // Использовать скрипт из задания 04-copy-directory для переноса папки assets в папку project-dist
     const assetsSrcPath = path.join(__dirname, assetsDir);
     const assetsDistPath = path.join(__dirname, targetDir, assetsDir);
-    copyDirContent(assetsSrcPath, assetsDistPath);
+    await fsPrms.mkdir(path.join(assetsDistPath), { recursive: true });
+    await cleanDir(assetsDistPath);
+    await copyDirContent(assetsSrcPath, assetsDistPath);
   } catch (err) {
-    console.error(err.message);
+    console.error("Function assembleProject, Err:", err.message);
   }
 }
 
